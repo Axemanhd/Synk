@@ -37,6 +37,7 @@ let pendingRestart = false;
 let pendingUpdatePath = null;
 let closeToTray = true;
 let autoStart = false;
+let appTheme = 'original';
 let firstClose = true;
 
 function loadSettings() {
@@ -45,6 +46,7 @@ function loadSettings() {
       const data = JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8'));
       if (typeof data.closeToTray === 'boolean') closeToTray = data.closeToTray;
       if (typeof data.autoStart === 'boolean') autoStart = data.autoStart;
+      if (typeof data.appTheme === 'string') appTheme = data.appTheme;
       if (typeof data.firstClose === 'boolean') firstClose = data.firstClose;
     }
   } catch {}
@@ -52,7 +54,7 @@ function loadSettings() {
 
 function saveSettings() {
   try {
-    fs.writeFileSync(getSettingsPath(), JSON.stringify({ closeToTray, autoStart, firstClose }, null, 2));
+    fs.writeFileSync(getSettingsPath(), JSON.stringify({ closeToTray, autoStart, appTheme, firstClose }, null, 2));
   } catch {}
 }
 
@@ -417,7 +419,7 @@ app.whenReady().then(() => {
     if (secure.clientId && !env.DISCORD_CLIENT_ID) env.DISCORD_CLIENT_ID = secure.clientId;
     return {
       env,
-      preferences: { closeToTray, autoStart, firstClose }
+      preferences: { closeToTray, autoStart, theme: appTheme, firstClose }
     };
   });
 
@@ -436,6 +438,11 @@ app.whenReady().then(() => {
     if (key === 'autoStart') {
       autoStart = value;
       app.setLoginItemSettings({ openAtLogin: value });
+      saveSettings();
+      return true;
+    }
+    if (key === 'theme') {
+      appTheme = value;
       saveSettings();
       return true;
     }

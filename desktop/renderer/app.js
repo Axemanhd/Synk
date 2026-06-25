@@ -17,6 +17,7 @@ const inputClientId = document.getElementById('input-client-id');
 const inputLogLevel = document.getElementById('input-log-level');
 const inputCloseToTray = document.getElementById('input-close-to-tray');
 const inputAutoStart = document.getElementById('input-auto-start');
+const inputTheme = document.getElementById('input-theme');
 const btnToggleToken = document.getElementById('btn-toggle-token');
 const updateBar = document.getElementById('update-bar');
 const currentVersion = document.getElementById('current-version');
@@ -106,6 +107,9 @@ async function loadSettings() {
   }
   inputCloseToTray.checked = data.preferences.closeToTray !== false;
   inputAutoStart.checked = data.preferences.autoStart === true;
+  const theme = data.preferences.theme || 'original';
+  inputTheme.value = theme;
+  applyTheme(theme);
 }
 
 btnSaveSettings.addEventListener('click', async () => {
@@ -141,6 +145,18 @@ inputCloseToTray.addEventListener('change', async () => {
 
 inputAutoStart.addEventListener('change', async () => {
   await api.setPreference('autoStart', inputAutoStart.checked);
+});
+
+function applyTheme(name) {
+  document.body.classList.remove('theme-dark', 'theme-light');
+  if (name === 'dark') document.body.classList.add('theme-dark');
+  if (name === 'light') document.body.classList.add('theme-light');
+}
+
+inputTheme.addEventListener('change', async () => {
+  const theme = inputTheme.value;
+  applyTheme(theme);
+  await api.setPreference('theme', theme);
 });
 
 // Open links in browser
