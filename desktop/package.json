@@ -1,6 +1,6 @@
 {
   "name": "synk-desktop",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Synk Music Bot — Desktop Application",
   "main": "main.js",
   "scripts": {
@@ -42,7 +42,10 @@
       {
         "from": "ffmpeg",
         "to": "ffmpeg",
-        "filter": ["ffmpeg.exe", "ffprobe.exe"]
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
       }
     ],
     "win": {
@@ -70,6 +73,7 @@
   },
   "devDependencies": {
     "electron": "^33.4.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "png-to-ico": "^3.0.1"
   }
 }
