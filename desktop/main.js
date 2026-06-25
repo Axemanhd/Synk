@@ -81,6 +81,8 @@ function saveEnv(settings) {
   let content = '# Synk — Music Bot\n';
   content += `DISCORD_TOKEN=${settings.DISCORD_TOKEN || ''}\n`;
   content += `DISCORD_CLIENT_ID=${settings.DISCORD_CLIENT_ID || ''}\n`;
+  if (settings.SPOTIFY_CLIENT_ID) content += `SPOTIFY_CLIENT_ID=${settings.SPOTIFY_CLIENT_ID}\n`;
+  if (settings.SPOTIFY_CLIENT_SECRET) content += `SPOTIFY_CLIENT_SECRET=${settings.SPOTIFY_CLIENT_SECRET}\n`;
   content += `LOG_LEVEL=${settings.LOG_LEVEL || 'info'}\n`;
   try {
     fs.writeFileSync(envPath, content, 'utf8');

@@ -19,9 +19,14 @@ export const config = {
     token: required('DISCORD_TOKEN'),
     clientId: required('DISCORD_CLIENT_ID'),
   },
+  spotify: {
+    clientId: process.env.SPOTIFY_CLIENT_ID || '',
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET || '',
+  },
   logLevel: optional('LOG_LEVEL', 'info'),
   inactivity: {
     pauseAfterMs: 5 * 60 * 1000,
     leaveAfterMs: 15 * 60 * 1000,
   },
+  maxPlaylistTracks: 700,
 } as const;

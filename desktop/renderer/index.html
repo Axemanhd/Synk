@@ -92,6 +92,22 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">
+            SPOTIFY_CLIENT_ID (optional)
+            <span class="help-icon" data-help="Your Spotify application Client ID from https://developer.spotify.com/dashboard. Adding this unlocks playlists up to 700 tracks instead of the default 100. Leave blank to use the basic 100-track limit.">?</span>
+          </label>
+          <input type="text" id="input-spotify-client-id" class="form-input" placeholder="Spotify Client ID" spellcheck="false">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            SPOTIFY_CLIENT_SECRET (optional)
+            <span class="help-icon" data-help="Your Spotify application Client Secret from the Developer Dashboard. Only needed if you entered a Spotify Client ID above.">?</span>
+          </label>
+          <input type="password" id="input-spotify-client-secret" class="form-input" placeholder="Spotify Client Secret" spellcheck="false">
+        </div>
+
         <div id="settings-actions">
           <button id="btn-save-settings" class="btn btn-primary">Save Configuration</button>
           <span id="save-status"></span>
