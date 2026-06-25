@@ -22,6 +22,9 @@ const updateBar = document.getElementById('update-bar');
 const currentVersion = document.getElementById('current-version');
 const btnCheckUpdates = document.getElementById('btn-check-updates');
 const updateResult = document.getElementById('update-result');
+const btnDownloadUpdate = document.getElementById('btn-download-update');
+const downloadProgressBar = document.getElementById('download-progress-bar');
+const downloadProgressFill = document.getElementById('download-progress-fill');
 
 let autoScroll = true;
 
@@ -152,6 +155,8 @@ document.querySelectorAll('.fake-link').forEach(el => {
 });
 
 // Updates
+let updateReleaseUrl = null;
+
 async function checkUpdates() {
   const info = await api.checkForUpdates();
   currentVersion.textContent = info.currentVersion || '-';
@@ -165,22 +170,29 @@ async function checkUpdates() {
         if (info.releaseUrl) api.openExternal(info.releaseUrl);
       });
     }
+    updateReleaseUrl = info.releaseUrl;
+    btnDownloadUpdate.style.display = 'inline-block';
     btnCheckUpdates.textContent = 'Update Available';
     btnCheckUpdates.className = 'btn btn-success';
     updateResult.textContent = `${info.latestVersion} available`;
     updateResult.style.color = '#f0a500';
+    downloadProgressBar.style.display = 'none';
   } else if (info.error) {
     updateBar.className = '';
+    btnDownloadUpdate.style.display = 'none';
     btnCheckUpdates.textContent = 'Check for Updates';
     btnCheckUpdates.className = 'btn btn-primary';
     updateResult.textContent = 'Unable to check';
     updateResult.style.color = '#888';
+    downloadProgressBar.style.display = 'none';
   } else {
     updateBar.className = '';
+    btnDownloadUpdate.style.display = 'none';
     btnCheckUpdates.textContent = 'Check for Updates';
     btnCheckUpdates.className = 'btn btn-primary';
     updateResult.textContent = 'Up to date';
     updateResult.style.color = '#2ecc71';
+    downloadProgressBar.style.display = 'none';
   }
 }
 
@@ -190,6 +202,32 @@ btnCheckUpdates.addEventListener('click', async () => {
   btnCheckUpdates.disabled = true;
   await checkUpdates();
   btnCheckUpdates.disabled = false;
+});
+
+btnDownloadUpdate.addEventListener('click', async () => {
+  btnDownloadUpdate.disabled = true;
+  updateResult.textContent = 'Downloading...';
+  updateResult.style.color = '#f0a500';
+  downloadProgressBar.style.display = 'block';
+  downloadProgressFill.style.width = '0%';
+
+  api.onDownloadProgress(({ downloaded, total }) => {
+    const pct = Math.round((downloaded / total) * 100);
+    downloadProgressFill.style.width = pct + '%';
+    updateResult.textContent = `Downloading... ${pct}%`;
+  });
+
+  const result = await api.downloadUpdate();
+
+  if (result.error) {
+    updateResult.textContent = 'Download failed: ' + result.error;
+    updateResult.style.color = '#e74c3c';
+    btnDownloadUpdate.disabled = false;
+  } else {
+    updateResult.textContent = 'Downloaded. Launching installer...';
+    updateResult.style.color = '#2ecc71';
+    await api.openFile(result.path);
+  }
 });
 
 // Init

@@ -19,5 +19,12 @@ contextBridge.exposeInMainWorld('synkAPI', {
     return () => ipcRenderer.removeListener('status-change', handler);
   },
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  openFile: (filePath) => ipcRenderer.invoke('open-file', filePath),
+  onDownloadProgress: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('download-progress', handler);
+    return () => ipcRenderer.removeListener('download-progress', handler);
+  },
   openExternal: (url) => shell.openExternal(url)
 });

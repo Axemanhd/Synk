@@ -418,6 +418,83 @@ app.whenReady().then(() => {
   ipcMain.handle('check-for-updates', () => {
     return checkForUpdates();
   });
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      const repo = 'Axemanhd/Synk';
+      const releaseUrl = `https://api.github.com/repos/${repo}/releases/latest`;
+      const release = await new Promise((resolve, reject) => {
+        https.get(releaseUrl, {
+          headers: { 'User-Agent': 'Synk-Desktop', 'Accept': 'application/vnd.github.v3+json' }
+        }, (res) => {
+          let data = '';
+          res.on('data', (c) => { data += c; });
+          res.on('end', () => resolve(JSON.parse(data)));
+          res.on('error', reject);
+        }).on('error', reject);
+      });
+
+      const exeAsset = release.assets.find((a) => a.name.endsWith('.exe') && a.name.includes('Setup'));
+      if (!exeAsset) return { error: 'No installer found in release' };
+
+      const downloadPath = path.join(app.getPath('downloads'), exeAsset.name);
+      const file = fs.createWriteStream(downloadPath);
+      const totalSize = exeAsset.size;
+
+      await new Promise((resolve, reject) => {
+        https.get(exeAsset.browser_download_url, {
+          headers: { 'User-Agent': 'Synk-Desktop', 'Accept': 'application/octet-stream' }
+        }, (res) => {
+          if (res.statusCode === 302) {
+            https.get(res.headers.location, {
+              headers: { 'User-Agent': 'Synk-Desktop' }
+            }, (redirectRes) => {
+              let downloaded = 0;
+              redirectRes.on('data', (chunk) => {
+                downloaded += chunk.length;
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('download-progress', { downloaded, total: totalSize });
+                }
+              });
+              redirectRes.pipe(file);
+              redirectRes.on('end', () => { file.end(); resolve(downloadPath); });
+              redirectRes.on('error', reject);
+            }).on('error', reject);
+            return;
+          }
+          let downloaded = 0;
+          res.on('data', (chunk) => {
+            downloaded += chunk.length;
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('download-progress', { downloaded, total: totalSize });
+            }
+          });
+          res.pipe(file);
+          res.on('end', () => { file.end(); resolve(downloadPath); });
+          res.on('error', reject);
+        }).on('error', reject);
+      });
+
+      return { path: downloadPath };
+    } catch (e) {
+      return { error: e.message };
+    }
+  });
+
+  ipcMain.handle('open-file', (_event, filePath) => {
+    try {
+      if (process.platform === 'win32') {
+        spawn('cmd.exe', ['/c', 'start', '', filePath]);
+      } else if (process.platform === 'darwin') {
+        spawn('open', [filePath]);
+      } else {
+        spawn('xdg-open', [filePath]);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
