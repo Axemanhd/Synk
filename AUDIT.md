@@ -7,7 +7,11 @@
 
 ## Resolution Log
 
-### v1.0.6 (2026-06-24)
+### v1.0.7 (2026-06-25)
+- 🆕 **Themes:** Light / Dark / Original selector in General tab, persists across restarts
+- 🆕 **Icon:** User-provided custom icon for window, tray, start menu, installer
+- 🆕 **Auto-start:** Windows startup toggle in General tab
+- 🆕 **Local cleanup:** Old installers purged, only current + 1 prior kept
 - ✅ **C-1/C-3:** `playTrack` error handler no longer deletes queue; added recursion depth guard (max 50)
 - ✅ **H-1:** `/previous` rewritten with direct playback — plays previous track immediately
 - ✅ **H-5:** `InactivityManager` now uses typed `IMusicService` interface
