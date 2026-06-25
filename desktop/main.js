@@ -90,6 +90,26 @@ function saveEnv(settings) {
   }
 }
 
+function saveSecureSettings(token, clientId) {
+  try {
+    const settings = JSON.parse(fs.existsSync(getSettingsPath()) ? fs.readFileSync(getSettingsPath(), 'utf8') : '{}');
+    settings.discordToken = token;
+    settings.discordClientId = clientId;
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2));
+    return true;
+  } catch { return false; }
+}
+
+function loadSecureSettings() {
+  try {
+    if (fs.existsSync(getSettingsPath())) {
+      const data = JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8'));
+      return { token: data.discordToken || '', clientId: data.discordClientId || '' };
+    }
+  } catch {}
+  return { token: '', clientId: '' };
+}
+
 function setStatus(status) {
   botStatus = status;
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -391,14 +411,20 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('load-settings', () => {
+    const env = loadEnv();
+    const secure = loadSecureSettings();
+    if (secure.token && !env.DISCORD_TOKEN) env.DISCORD_TOKEN = secure.token;
+    if (secure.clientId && !env.DISCORD_CLIENT_ID) env.DISCORD_CLIENT_ID = secure.clientId;
     return {
-      env: loadEnv(),
+      env,
       preferences: { closeToTray, autoStart, firstClose }
     };
   });
 
   ipcMain.handle('save-settings', (_event, settings) => {
-    return saveEnv(settings);
+    const ok = saveEnv(settings);
+    saveSecureSettings(settings.DISCORD_TOKEN, settings.DISCORD_CLIENT_ID);
+    return ok;
   });
 
   ipcMain.handle('set-preference', (_event, key, value) => {

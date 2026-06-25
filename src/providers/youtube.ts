@@ -95,9 +95,13 @@ export async function getStream(url: string): Promise<StreamResult> {
 
   ytProc.stdout.pipe(buffer);
 
-  ytProc.stderr?.on('data', () => {});
+  ytProc.stderr?.on('data', (data) => {
+    logger.warn({ url, stderr: data.toString().trim() }, 'yt-dlp stderr');
+  });
 
-  ytProc.on('error', () => {});
+  ytProc.on('error', (err) => {
+    logger.error({ url, err: String(err) }, 'yt-dlp process error');
+  });
 
   ytProc.on('close', (code: number | null) => {
     if (code !== 0 && code !== null) {

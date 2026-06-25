@@ -33,6 +33,14 @@ export class PermissionsManager {
       return false;
     }
 
+    if (!botMember?.voice.channel) {
+      await interaction.reply({
+        content: 'The bot is not connected to a voice channel. Use /play first.',
+        ephemeral: true,
+      });
+      return false;
+    }
+
     return true;
   }
 

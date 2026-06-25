@@ -255,16 +255,18 @@ export class UIManager {
 
   async removePanel(guildId: string): Promise<void> {
     const panel = this.panels.get(guildId);
-    if (!panel) return;
+    if (!panel || !panel.messageId) {
+      this.panels.delete(guildId);
+      return;
+    }
 
     try {
-      const { client } = require('discord.js');
       const guild = queueManager.get(guildId)?.guild;
       if (guild) {
         const channel = guild.client.channels.cache.get(panel.channelId) as TextChannel | undefined;
-        if (channel && panel.messageId) {
+        if (channel) {
           const message = await channel.messages.fetch(panel.messageId);
-          await message.delete();
+          await message.delete().catch(() => {});
         }
       }
     } catch {

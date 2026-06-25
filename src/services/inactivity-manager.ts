@@ -4,11 +4,17 @@ import { config } from '../config';
 import { logger } from '../logger';
 import { queueManager } from './queue-manager';
 
+export interface IMusicService {
+  pause(guildId: string): boolean;
+  stop(guildId: string): void;
+  leave(guildId: string): void;
+}
+
 export class InactivityManager {
   private states: Map<string, InactivityState> = new Map();
-  private musicService: any;
+  private musicService: IMusicService;
 
-  constructor(musicService: any) {
+  constructor(musicService: IMusicService) {
     this.musicService = musicService;
   }
 
@@ -42,7 +48,7 @@ export class InactivityManager {
   private handleLeaveTimeout(guildId: string): void {
     logger.info({ guildId }, 'Inactivity leave timeout');
     this.musicService.stop(guildId);
-    this.musicService.cleanup(guildId);
+    this.musicService.leave(guildId);
     this.states.delete(guildId);
   }
 

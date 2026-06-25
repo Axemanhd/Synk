@@ -33,7 +33,17 @@ export class MusicService {
     return this.players.get(guildId);
   }
 
-  async playTrack(guildId: string): Promise<void> {
+  async playTrack(guildId: string, depth: number = 0): Promise<void> {
+    if (depth > 50) {
+      logger.error({ guildId }, 'playTrack recursion limit reached, stopping');
+      const queue = queueManager.get(guildId);
+      if (queue) {
+        queue.playing = false;
+        queue.currentTrack = null;
+      }
+      return;
+    }
+
     const queue = queueManager.get(guildId);
     if (!queue) return;
 
@@ -70,8 +80,7 @@ export class MusicService {
     } catch (error: any) {
       const msg = typeof error === 'string' ? error : error?.message || error?.toString?.() || 'unknown';
       logger.error({ guildId, track: track.title, err: msg }, 'Failed to play track, skipping');
-      queueManager.remove(guildId);
-      await this.playTrack(guildId);
+      await this.playTrack(guildId, depth + 1);
     }
   }
 
@@ -134,6 +143,9 @@ export class MusicService {
   }
 
   pause(guildId: string): boolean {
+    const queue = queueManager.get(guildId);
+    if (!queue || !queue.currentTrack) return false;
+
     const player = this.players.get(guildId);
     if (!player) return false;
 
@@ -142,6 +154,9 @@ export class MusicService {
   }
 
   resume(guildId: string): boolean {
+    const queue = queueManager.get(guildId);
+    if (!queue || !queue.currentTrack) return false;
+
     const player = this.players.get(guildId);
     if (!player) return false;
 
@@ -157,15 +172,60 @@ export class MusicService {
     return true;
   }
 
-  async previous(guildId: string): Promise<boolean> {
+  async playCurrent(guildId: string): Promise<void> {
+    const queue = queueManager.get(guildId);
+    if (!queue || !queue.currentTrack) return;
+
+    const player = this.players.get(guildId);
+    if (!player) return;
+
+    const track = queue.currentTrack;
+
+    try {
+      const result = await getStream(track.url);
+      const resource = createAudioResource(result.stream, { inputType: StreamType.Arbitrary });
+      result.stream.on('error', (e) => logger.error({ guildId, err: String(e) }, 'Stream error'));
+      player.play(resource);
+      queue.playing = true;
+      queue.paused = false;
+      logger.info({ guildId, track: track.title }, 'Now playing (direct)');
+    } catch (error: any) {
+      const msg = typeof error === 'string' ? error : error?.message || error?.toString?.() || 'unknown';
+      logger.error({ guildId, track: track.title, err: msg }, 'Failed to play current track');
+      queue.currentTrack = null;
+      queue.playing = false;
+    }
+  }
+
+  async previous(guildId: string, depth: number = 0): Promise<boolean> {
+    if (depth > 10) {
+      logger.error({ guildId }, 'previous recursion limit reached');
+      return false;
+    }
+
     const queue = queueManager.get(guildId);
     if (!queue) return false;
 
     const track = queueManager.previous(queue);
     if (!track) return false;
 
-    this.skip(guildId);
-    return true;
+    const player = this.players.get(guildId);
+    if (player) player.stop();
+
+    try {
+      const result = await getStream(track.url);
+      const resource = createAudioResource(result.stream, { inputType: StreamType.Arbitrary });
+      result.stream.on('error', (e) => logger.error({ guildId, err: String(e) }, 'Stream error'));
+      player?.play(resource);
+      if (queue) {
+        queue.playing = true;
+        queue.paused = false;
+      }
+      logger.info({ guildId, track: track.title }, 'Now playing previous track');
+      return true;
+    } catch {
+      return await this.previous(guildId, depth + 1);
+    }
   }
 
   stop(guildId: string): void {

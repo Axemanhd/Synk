@@ -139,6 +139,9 @@ async function resolveToTrack(
         source: 'spotify' as const,
       }];
     }
+
+    logger.warn({ url }, 'Unsupported Spotify URL type (not a track or playlist)');
+    return [];
   }
 
   const searched = await searchYouTubeVideo(url);
@@ -304,6 +307,7 @@ export const commands: Command[] = [
       }
 
       await interaction.reply({ content: '⏭️ Skipped track.' });
+      await uiManager.updatePanel(guildId);
     },
   },
   {
@@ -322,6 +326,7 @@ export const commands: Command[] = [
       }
 
       await interaction.reply({ content: '⏮️ Going back to previous track.' });
+      await uiManager.updatePanel(guildId);
     },
   },
   {
