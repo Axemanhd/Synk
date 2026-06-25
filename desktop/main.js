@@ -78,7 +78,7 @@ function loadEnv() {
 
 function saveEnv(settings) {
   const envPath = getEnvPath();
-  let content = '# Synk — Discord Music Bot\n';
+  let content = '# Synk — Music Bot\n';
   content += `DISCORD_TOKEN=${settings.DISCORD_TOKEN || ''}\n`;
   content += `DISCORD_CLIENT_ID=${settings.DISCORD_CLIENT_ID || ''}\n`;
   content += `LOG_LEVEL=${settings.LOG_LEVEL || 'info'}\n`;
@@ -139,7 +139,7 @@ function buildTrayMenu() {
 function createTray() {
   const icon = getTrayIcon() || nativeImage.createEmpty();
   tray = new Tray(icon);
-  tray.setToolTip('Synk — Discord Music Bot');
+  tray.setToolTip('Synk — Music Bot');
   tray.setContextMenu(buildTrayMenu());
   tray.on('double-click', () => {
     if (mainWindow) {
