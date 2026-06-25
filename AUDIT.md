@@ -1,8 +1,28 @@
 # Synk — Codebase Audit
 
 **Date:** 2026-06-24  
-**Version:** 1.0.5  
+**Version:** 1.0.6  
 **Files Audited:** 22 source files across bot (src/) and desktop app (desktop/)
+**Status:** 13 of 31 issues resolved in v1.0.6
+
+## Resolution Log
+
+### v1.0.6 (2026-06-24)
+- ✅ **C-1/C-3:** `playTrack` error handler no longer deletes queue; added recursion depth guard (max 50)
+- ✅ **H-1:** `/previous` rewritten with direct playback — plays previous track immediately
+- ✅ **H-5:** `InactivityManager` now uses typed `IMusicService` interface
+- ✅ **H-6:** `removePanel` guards against null `messageId` before fetch
+- ✅ **M-1:** `requireVoiceChannel` rejects when bot is not in any voice channel
+- ✅ **M-2:** Unsupported Spotify URLs (album/artist) log a warning and return empty
+- ✅ **M-4:** Dead `require('discord.js')` removed from `removePanel`
+- ✅ **M-5:** `pause()/resume()` now check for active queue + currentTrack
+- ✅ **M-9:** yt-dlp stderr logged as `logger.warn`, process errors logged as `logger.error`
+- ✅ **L-4:** `/skip` and `/previous` slash commands now call `uiManager.updatePanel`
+- 🆕 **Desktop:** Token/client ID persisted in `desktop-settings.json` (survives updates)
+- 🆕 **Desktop:** Dashboard layout — controls stay fixed at top, log scrolls independently
+- 🆕 **Desktop:** Info page under General with Axeman/Custum/Deepseek V4 Pro credits
+
+---
 
 ---
 
