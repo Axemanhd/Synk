@@ -18,5 +18,6 @@ contextBridge.exposeInMainWorld('synkAPI', {
     ipcRenderer.on('status-change', handler);
     return () => ipcRenderer.removeListener('status-change', handler);
   },
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   openExternal: (url) => shell.openExternal(url)
 });

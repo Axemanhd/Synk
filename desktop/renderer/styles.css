@@ -67,9 +67,25 @@ body {
 .status-running { background: #2ecc71; }
 .status-stopping { background: #e74c3c; animation: pulse 0.5s infinite; }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+#update-bar {
+  padding: 8px 16px;
+  border-bottom: 1px solid #2a2a4a;
+  font-size: 11px;
+  display: none;
+}
+
+#update-bar.visible {
+  display: block;
+}
+
+#update-bar .update-link {
+  color: #f0a500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#update-bar .update-link:hover {
+  text-decoration: underline;
 }
 
 #nav-tabs {
@@ -389,6 +405,22 @@ code {
 }
 
 /* General tab */
+#update-section {
+  margin-bottom: 20px;
+}
+
+#update-section p {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+#update-result {
+  font-size: 12px;
+  display: inline-block;
+  margin-left: 10px;
+}
+
 #input-close-to-tray {
   margin-right: 6px;
 }

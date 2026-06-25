@@ -18,6 +18,7 @@
         <span id="status-indicator" class="status-stopped"></span>
         <span id="status-text">Stopped</span>
       </div>
+      <div id="update-bar"></div>
       <ul id="nav-tabs">
         <li class="nav-item active" data-tab="dashboard">
           <span class="nav-icon">&#9654;</span> Dashboard
@@ -217,6 +218,13 @@
             Start Synk when Windows starts
             <span class="help-icon" data-help="When enabled, Synk will automatically start when you log into Windows. The app will start minimized to the system tray. Disable this if you prefer to launch Synk manually.">?</span>
           </label>
+        </div>
+
+        <h3>Updates</h3>
+        <div id="update-section">
+          <p id="update-status">Current version: <span id="current-version">-</span></p>
+          <button id="btn-check-updates" class="btn btn-primary">Check for Updates</button>
+          <span id="update-result"></span>
         </div>
 
         <div id="restart-notice" class="notice">Some settings may take effect after restarting the application.</div>

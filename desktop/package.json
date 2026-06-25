@@ -38,6 +38,11 @@
       {
         "from": "../package.json",
         "to": "bot/package.json"
+      },
+      {
+        "from": "ffmpeg",
+        "to": "ffmpeg",
+        "filter": ["ffmpeg.exe", "ffprobe.exe"]
       }
     ],
     "win": {

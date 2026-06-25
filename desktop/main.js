@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, nativeImage, Notificati
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const https = require('https');
 
 const isDev = !app.isPackaged;
 
@@ -228,9 +229,14 @@ function runBot() {
     LOG_LEVEL: env.LOG_LEVEL || 'info'
   };
 
-  botProcess = spawn('node', [botScript], {
+  const ffmpegDir = isDev ? path.join(__dirname, 'ffmpeg') : path.join(process.resourcesPath, 'ffmpeg');
+  if (fs.existsSync(ffmpegDir)) {
+    childEnv.PATH = ffmpegDir + ';' + (childEnv.PATH || '');
+  }
+
+  botProcess = spawn(process.execPath, [botScript], {
     cwd: botDir,
-    env: childEnv,
+    env: { ...childEnv, ELECTRON_RUN_AS_NODE: '1' },
     stdio: ['pipe', 'pipe', 'pipe']
   });
 
@@ -304,6 +310,62 @@ function restartBot() {
   }
 }
 
+function checkForUpdates() {
+  return new Promise((resolve) => {
+    const currentVersion = app.getVersion();
+    const repo = 'Axemanhd/Synk';
+    const url = `https://api.github.com/repos/${repo}/releases/latest`;
+
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'Synk-Desktop', 'Accept': 'application/vnd.github.v3+json' }
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const release = JSON.parse(data);
+          if (release.tag_name) {
+            const latestVersion = release.tag_name.replace(/^v/, '');
+            const current = currentVersion.replace(/^v/, '');
+            const updateAvailable = compareVersions(latestVersion, current) > 0;
+            resolve({
+              updateAvailable,
+              currentVersion,
+              latestVersion: release.tag_name,
+              releaseUrl: release.html_url,
+              releaseNotes: release.body ? release.body.slice(0, 500) : ''
+            });
+          } else {
+            resolve({ updateAvailable: false, currentVersion, latestVersion: null, error: 'No release found' });
+          }
+        } catch {
+          resolve({ updateAvailable: false, currentVersion, latestVersion: null, error: 'Failed to parse release data' });
+        }
+      });
+    });
+
+    req.on('error', () => {
+      resolve({ updateAvailable: false, currentVersion, latestVersion: null, error: 'Could not reach GitHub' });
+    });
+    req.setTimeout(10000, () => {
+      req.destroy();
+      resolve({ updateAvailable: false, currentVersion, latestVersion: null, error: 'Request timed out' });
+    });
+  });
+}
+
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
 app.whenReady().then(() => {
   loadSettings();
   app.setLoginItemSettings({ openAtLogin: autoStart });
@@ -351,6 +413,10 @@ app.whenReady().then(() => {
       return true;
     }
     return false;
+  });
+
+  ipcMain.handle('check-for-updates', () => {
+    return checkForUpdates();
   });
 });
 

@@ -18,6 +18,10 @@ const inputLogLevel = document.getElementById('input-log-level');
 const inputCloseToTray = document.getElementById('input-close-to-tray');
 const inputAutoStart = document.getElementById('input-auto-start');
 const btnToggleToken = document.getElementById('btn-toggle-token');
+const updateBar = document.getElementById('update-bar');
+const currentVersion = document.getElementById('current-version');
+const btnCheckUpdates = document.getElementById('btn-check-updates');
+const updateResult = document.getElementById('update-result');
 
 let autoScroll = true;
 
@@ -147,9 +151,51 @@ document.querySelectorAll('.fake-link').forEach(el => {
   });
 });
 
+// Updates
+async function checkUpdates() {
+  const info = await api.checkForUpdates();
+  currentVersion.textContent = info.currentVersion || '-';
+
+  if (info.updateAvailable) {
+    updateBar.className = 'visible';
+    updateBar.innerHTML = `<span class="update-link" id="update-release-link">Update available: ${info.latestVersion}</span>`;
+    const link = document.getElementById('update-release-link');
+    if (link) {
+      link.addEventListener('click', () => {
+        if (info.releaseUrl) api.openExternal(info.releaseUrl);
+      });
+    }
+    btnCheckUpdates.textContent = 'Update Available';
+    btnCheckUpdates.className = 'btn btn-success';
+    updateResult.textContent = `${info.latestVersion} available`;
+    updateResult.style.color = '#f0a500';
+  } else if (info.error) {
+    updateBar.className = '';
+    btnCheckUpdates.textContent = 'Check for Updates';
+    btnCheckUpdates.className = 'btn btn-primary';
+    updateResult.textContent = 'Unable to check';
+    updateResult.style.color = '#888';
+  } else {
+    updateBar.className = '';
+    btnCheckUpdates.textContent = 'Check for Updates';
+    btnCheckUpdates.className = 'btn btn-primary';
+    updateResult.textContent = 'Up to date';
+    updateResult.style.color = '#2ecc71';
+  }
+}
+
+btnCheckUpdates.addEventListener('click', async () => {
+  updateResult.textContent = 'Checking...';
+  updateResult.style.color = '#888';
+  btnCheckUpdates.disabled = true;
+  await checkUpdates();
+  btnCheckUpdates.disabled = false;
+});
+
 // Init
 (async function init() {
   const status = await api.getStatus();
   updateUI(status);
   await loadSettings();
+  checkUpdates();
 })();
