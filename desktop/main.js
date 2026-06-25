@@ -251,6 +251,8 @@ function runBot() {
     DISCORD_CLIENT_ID: env.DISCORD_CLIENT_ID,
     LOG_LEVEL: env.LOG_LEVEL || 'info'
   };
+  if (env.SPOTIFY_CLIENT_ID) childEnv.SPOTIFY_CLIENT_ID = env.SPOTIFY_CLIENT_ID;
+  if (env.SPOTIFY_CLIENT_SECRET) childEnv.SPOTIFY_CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
 
   const ffmpegDir = isDev ? path.join(__dirname, 'ffmpeg') : path.join(process.resourcesPath, 'ffmpeg');
   if (fs.existsSync(ffmpegDir)) {
