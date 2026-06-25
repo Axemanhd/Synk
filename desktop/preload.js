@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('synkAPI', {
   },
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: (filePath) => ipcRenderer.invoke('install-update', filePath),
   openFile: (filePath) => ipcRenderer.invoke('open-file', filePath),
   onDownloadProgress: (callback) => {
     const handler = (_event, data) => callback(data);

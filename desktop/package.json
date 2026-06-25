@@ -1,6 +1,6 @@
 {
   "name": "synk-desktop",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Synk Discord Music Bot — Desktop Application",
   "main": "main.js",
   "scripts": {

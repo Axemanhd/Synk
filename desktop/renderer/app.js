@@ -224,9 +224,12 @@ btnDownloadUpdate.addEventListener('click', async () => {
     updateResult.style.color = '#e74c3c';
     btnDownloadUpdate.disabled = false;
   } else {
-    updateResult.textContent = 'Downloaded. Launching installer...';
+    updateResult.textContent = 'Downloaded. Closing app to install...';
     updateResult.style.color = '#2ecc71';
-    await api.openFile(result.path);
+    updateBar.style.display = 'none';
+    setTimeout(async () => {
+      await api.installUpdate(result.path);
+    }, 1500);
   }
 });
 

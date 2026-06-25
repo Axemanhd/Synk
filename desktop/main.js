@@ -415,6 +415,8 @@ app.whenReady().then(() => {
     return false;
   });
 
+let pendingUpdatePath = null;
+
   ipcMain.handle('check-for-updates', () => {
     return checkForUpdates();
   });
@@ -481,19 +483,12 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.handle('open-file', (_event, filePath) => {
-    try {
-      if (process.platform === 'win32') {
-        spawn('cmd.exe', ['/c', 'start', '', filePath]);
-      } else if (process.platform === 'darwin') {
-        spawn('open', [filePath]);
-      } else {
-        spawn('xdg-open', [filePath]);
-      }
-      return true;
-    } catch {
-      return false;
-    }
+  ipcMain.handle('install-update', async (_event, filePath) => {
+    stopBot();
+    pendingUpdatePath = filePath;
+    app.isQuitting = true;
+    if (mainWindow) mainWindow.close();
+    return true;
   });
 });
 
@@ -514,4 +509,14 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   app.isQuitting = true;
   stopBot();
+});
+
+app.on('will-quit', () => {
+  if (pendingUpdatePath) {
+    try {
+      if (process.platform === 'win32') {
+        spawn('cmd.exe', ['/c', 'start', '', pendingUpdatePath], { detached: true, stdio: 'ignore' });
+      }
+    } catch {}
+  }
 });
