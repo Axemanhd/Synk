@@ -15,8 +15,6 @@ const saveStatus = document.getElementById('save-status');
 const inputToken = document.getElementById('input-token');
 const inputClientId = document.getElementById('input-client-id');
 const inputLogLevel = document.getElementById('input-log-level');
-const inputSpotifyClientId = document.getElementById('input-spotify-client-id');
-const inputSpotifyClientSecret = document.getElementById('input-spotify-client-secret');
 const inputCloseToTray = document.getElementById('input-close-to-tray');
 const inputAutoStart = document.getElementById('input-auto-start');
 const btnToggleToken = document.getElementById('btn-toggle-token');
@@ -106,8 +104,6 @@ async function loadSettings() {
   if (env.LOG_LEVEL) {
     inputLogLevel.value = env.LOG_LEVEL;
   }
-  inputSpotifyClientId.value = env.SPOTIFY_CLIENT_ID || '';
-  inputSpotifyClientSecret.value = env.SPOTIFY_CLIENT_SECRET || '';
   inputCloseToTray.checked = data.preferences.closeToTray !== false;
   inputAutoStart.checked = data.preferences.autoStart === true;
 }
@@ -116,9 +112,7 @@ btnSaveSettings.addEventListener('click', async () => {
   const settings = {
     DISCORD_TOKEN: inputToken.value.trim(),
     DISCORD_CLIENT_ID: inputClientId.value.trim(),
-    LOG_LEVEL: inputLogLevel.value,
-    SPOTIFY_CLIENT_ID: inputSpotifyClientId.value.trim(),
-    SPOTIFY_CLIENT_SECRET: inputSpotifyClientSecret.value.trim(),
+    LOG_LEVEL: inputLogLevel.value
   };
   if (!settings.DISCORD_TOKEN) {
     saveStatus.textContent = 'Token is required!';

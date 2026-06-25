@@ -81,8 +81,6 @@ function saveEnv(settings) {
   let content = '# Synk — Music Bot\n';
   content += `DISCORD_TOKEN=${settings.DISCORD_TOKEN || ''}\n`;
   content += `DISCORD_CLIENT_ID=${settings.DISCORD_CLIENT_ID || ''}\n`;
-  if (settings.SPOTIFY_CLIENT_ID) content += `SPOTIFY_CLIENT_ID=${settings.SPOTIFY_CLIENT_ID}\n`;
-  if (settings.SPOTIFY_CLIENT_SECRET) content += `SPOTIFY_CLIENT_SECRET=${settings.SPOTIFY_CLIENT_SECRET}\n`;
   content += `LOG_LEVEL=${settings.LOG_LEVEL || 'info'}\n`;
   try {
     fs.writeFileSync(envPath, content, 'utf8');
@@ -251,8 +249,6 @@ function runBot() {
     DISCORD_CLIENT_ID: env.DISCORD_CLIENT_ID,
     LOG_LEVEL: env.LOG_LEVEL || 'info'
   };
-  if (env.SPOTIFY_CLIENT_ID) childEnv.SPOTIFY_CLIENT_ID = env.SPOTIFY_CLIENT_ID;
-  if (env.SPOTIFY_CLIENT_SECRET) childEnv.SPOTIFY_CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
 
   const ffmpegDir = isDev ? path.join(__dirname, 'ffmpeg') : path.join(process.resourcesPath, 'ffmpeg');
   if (fs.existsSync(ffmpegDir)) {
