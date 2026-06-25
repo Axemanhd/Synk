@@ -1,0 +1,115 @@
+How Synk (The Discord Music Bot) Works
+========================================
+
+Think of Synk like a tiny robot that joins your Discord voice chat and
+plays music on command. Here's what's happening behind the scenes:
+
+--- The Big Picture ---
+
+You (in Discord) type a slash command like "/play some song".
+Synk's code receives it, figures out what to do, plays audio into
+the voice channel, and shows a little control panel with buttons.
+
+--- Piece by Piece ---
+
+1. ENTRY POINT (index.ts)
+   - This is the "main switchboard." When you run the bot, this file:
+     * Logs into Discord using your bot token
+     * Registers all the slash commands like /play, /skip, /pause
+     * Watches for commands and button clicks, then routes them
+       to the right place
+     * Also watches when people join/leave voice so it can auto-pause
+
+2. COMMANDS (commands/index.ts)
+   - Every slash command is defined here with its name, description,
+     and what to do when someone runs it.
+   - For example, /play takes whatever you type, figures out if it's
+     a YouTube URL, Spotify URL, or just a song name, then calls the
+     music service to start playing.
+
+3. MUSIC SERVICE (music-service.ts)
+   - This is the "DJ." It controls the audio player:
+     * Creates an audio player and hooks it to the voice connection
+     * Handles play, pause, resume, skip, stop
+     * When a track finishes, it automatically plays the next one
+       (or repeats if you set repeat mode)
+
+4. QUEUE MANAGER (queue-manager.ts)
+   - This is the "playlist organizer." Every Discord server gets its
+     own queue (a list of upcoming songs).
+   - It keeps track of:
+     * Upcoming tracks
+     * Already-played tracks (so you can go back)
+     * The current track
+     * Repeat mode (off / repeat one / repeat whole queue)
+     * Shuffle mode (randomizes the order)
+
+5. VOICE MANAGER (voice-manager.ts)
+   - Handles the "phone call" to Discord's voice servers.
+   - Joins a voice channel, leaves it, and keeps the connection alive.
+
+6. UI MANAGER (ui-manager.ts)
+   - This creates the "now playing" embed (that blue box with the
+     song info) and the buttons underneath it.
+   - When you click a button (skip, pause, etc.), it catches the
+     click and runs the corresponding action.
+   - It updates the embed automatically when things change.
+
+7. INACTIVITY MANAGER (inactivity-manager.ts)
+   - If everyone leaves the voice channel, this starts a timer.
+   - First it pauses the music. If nobody comes back, it makes the
+     bot leave entirely. Saves resources.
+
+8. YOUTUBE PROVIDER (youtube.ts)
+   - When you give a YouTube link (or the bot finds a YouTube video
+     from a Spotify search), this file:
+     * Uses play-dl to look up video info (title, duration, thumbnail)
+     * Uses yt-dlp (a command-line tool) to grab the actual audio
+       stream and pipe it into Discord
+
+9. SPOTIFY PROVIDER (spotify.ts)
+   - When you paste a Spotify link (or search by song name), this
+     file scrapes Spotify's public web pages for track info.
+   - It does NOT need a Spotify API key — it just reads the data
+     that Spotify's own website loads.
+   - The bot then searches YouTube for the same song and plays
+     the YouTube version.
+
+--- The Flow of a /play Command ---
+
+Say you type "/play https://youtube.com/watch?v=..."
+
+  1. Discord sends the command to the bot
+  2. index.ts receives it and calls the /play handler
+  3. The handler checks if it's a YouTube URL, Spotify URL,
+     or plain text search
+  4. It fetches the song info (title, artist, duration)
+  5. The bot joins your voice channel if it isn't already there
+  6. The track gets added to the queue
+  7. If nothing is playing, the music service starts playback
+  8. The YouTube provider calls yt-dlp to stream the audio
+  9. The audio goes through Discord's voice system into your ears
+  10. A "Now Playing" embed appears in the text channel with buttons
+
+--- Why No Spotify API Key? ---
+
+Spotify normally requires a paid developer account to use their API.
+Instead, Synk uses a library called "spotify-url-info" that does
+what your web browser does — it opens Spotify's public web pages
+and reads the track/playlist data from them. This means:
+
+  * No credit card needed
+  * No API key setup
+  * Works for any public Spotify link
+
+The bot then finds the matching song on YouTube and plays that,
+since Discord can stream YouTube audio but not Spotify audio.
+
+--- TL;DR ---
+
+  - Synk is a Node.js app that connects to Discord
+  - It listens for slash commands and button clicks
+  - It scrapes song info from YouTube and Spotify
+  - It streams audio into Discord voice channels
+  - Each Discord server gets its own queue and controls
+  - An embed with buttons lets you control playback visually

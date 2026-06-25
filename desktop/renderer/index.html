@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Synk — Discord Music Bot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div id="sidebar-header">
+        <h1>Synk</h1>
+        <span id="sidebar-subtitle">Discord Music Bot</span>
+      </div>
+      <div id="status-bar">
+        <span id="status-indicator" class="status-stopped"></span>
+        <span id="status-text">Stopped</span>
+      </div>
+      <ul id="nav-tabs">
+        <li class="nav-item active" data-tab="dashboard">
+          <span class="nav-icon">&#9654;</span> Dashboard
+        </li>
+        <li class="nav-item" data-tab="settings">
+          <span class="nav-icon">&#9881;</span> Settings
+        </li>
+        <li class="nav-item" data-tab="guide">
+          <span class="nav-icon">&#63;</span> Setup Guide
+        </li>
+        <li class="nav-item" data-tab="general">
+          <span class="nav-icon">&#8505;</span> General
+        </li>
+      </ul>
+    </nav>
+
+    <main id="content">
+
+      <!-- Dashboard Tab -->
+      <section id="tab-dashboard" class="tab-content active">
+        <div id="controls">
+          <button id="btn-run" class="btn btn-success">&#9654; Run Bot</button>
+          <button id="btn-stop" class="btn btn-danger" disabled>&#9632; Stop</button>
+          <button id="btn-restart" class="btn btn-warning" disabled>&#8635; Restart</button>
+        </div>
+        <div id="log-container">
+          <div id="log-header">
+            <span>Console Output</span>
+            <button id="btn-clear-log" class="btn btn-small">Clear</button>
+          </div>
+          <pre id="log-output"></pre>
+        </div>
+      </section>
+
+      <!-- Settings Tab -->
+      <section id="tab-settings" class="tab-content">
+        <h2>Bot Configuration</h2>
+        <p class="section-desc">These values will be written to the .env file and used when the bot starts.</p>
+
+        <div class="form-group">
+          <label class="form-label">
+            DISCORD_TOKEN
+            <span class="help-icon" data-help="Your Discord bot token from the Discord Developer Portal. This is a secret value — do not share it with anyone. If your token is compromised, reset it immediately on the Discord Developer Portal under Bot > Reset Token.">?</span>
+          </label>
+          <input type="password" id="input-token" class="form-input" placeholder="Paste your Discord bot token here" spellcheck="false">
+          <button id="btn-toggle-token" class="btn btn-small">Show</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            DISCORD_CLIENT_ID
+            <span class="help-icon" data-help="The Application ID (Client ID) of your Discord application. Find it on the Discord Developer Portal under OAuth2 > General > Client ID. This is needed to register slash commands.">?</span>
+          </label>
+          <input type="text" id="input-client-id" class="form-input" placeholder="Paste your Discord Client ID here" spellcheck="false">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            LOG_LEVEL
+            <span class="help-icon" data-help="Controls how detailed the log output is. 'info' is recommended for normal use. Use 'debug' or 'trace' for troubleshooting. Other values: warn, error, fatal.">?</span>
+          </label>
+          <select id="input-log-level" class="form-input">
+            <option value="trace">trace</option>
+            <option value="debug">debug</option>
+            <option value="info" selected>info</option>
+            <option value="warn">warn</option>
+            <option value="error">error</option>
+            <option value="fatal">fatal</option>
+          </select>
+        </div>
+
+        <div id="settings-actions">
+          <button id="btn-save-settings" class="btn btn-primary">Save Configuration</button>
+          <span id="save-status"></span>
+        </div>
+      </section>
+
+      <!-- Setup Guide Tab -->
+      <section id="tab-guide" class="tab-content">
+        <h2>Setup Guide</h2>
+
+        <div class="guide-section">
+          <h3>1. Create a Discord Application</h3>
+          <ol>
+            <li>Go to the <a href="#" class="fake-link" data-url="https://discord.com/developers/applications">Discord Developer Portal</a> and click <strong>New Application</strong>.</li>
+            <li>Give your application a name (e.g., "Synk") and click <strong>Create</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>2. Get Your Client ID</h3>
+          <ol>
+            <li>In your application page, go to <strong>OAuth2 &gt; General</strong>.</li>
+            <li>Copy the <strong>Client ID</strong> value.</li>
+            <li>Paste it into the <strong>Settings</strong> page under <em>DISCORD_CLIENT_ID</em>.</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>3. Create a Bot User</h3>
+          <ol>
+            <li>Go to <strong>Bot</strong> in the left sidebar.</li>
+            <li>Click <strong>Add Bot</strong> &gt; <strong>Yes, do it!</strong></li>
+            <li>Under the <strong>Privileged Gateway Intents</strong> section, enable:
+              <ul>
+                <li><strong>MESSAGE CONTENT INTENT</strong> (required for commands)</li>
+                <li><strong>SERVER MEMBERS INTENT</strong> (recommended)</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>4. Get Your Bot Token</h3>
+          <ol>
+            <li>Still under <strong>Bot</strong>, click <strong>Reset Token</strong> (or copy the existing one).</li>
+            <li>Copy the token and paste it into the <strong>Settings</strong> page under <em>DISCORD_TOKEN</em>.</li>
+            <li class="warning-text"><strong>Warning:</strong> Never share your bot token. If your token is leaked, reset it immediately on the Developer Portal.</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>5. Invite the Bot to Your Server</h3>
+          <ol>
+            <li>Go to <strong>OAuth2 &gt; URL Generator</strong>.</li>
+            <li>Select the following scopes:
+              <ul>
+                <li><strong>bot</strong></li>
+                <li><strong>applications.commands</strong></li>
+              </ul>
+            </li>
+            <li>Select these bot permissions:
+              <ul>
+                <li><strong>Send Messages</strong></li>
+                <li><strong>Manage Messages</strong></li>
+                <li><strong>Embed Links</strong></li>
+                <li><strong>Read Message History</strong></li>
+                <li><strong>Connect</strong> (voice)</li>
+                <li><strong>Speak</strong> (voice)</li>
+                <li><strong>Use Voice Activity</strong></li>
+              </ul>
+            </li>
+            <li>Copy the generated URL and open it in your browser.</li>
+            <li>Select your server and click <strong>Authorize</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>6. Install FFmpeg (Required for Audio)</h3>
+          <ol>
+            <li>If you haven't already, install FFmpeg from <a href="#" class="fake-link" data-url="https://ffmpeg.org/download.html">ffmpeg.org</a>.</li>
+            <li>Or install via WinGet by running in a terminal: <code>winget install Gyan.FFmpeg</code></li>
+            <li>Make sure FFmpeg is available in your system PATH.</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>7. Run the Bot</h3>
+          <ol>
+            <li>Make sure you've saved your <strong>DISCORD_TOKEN</strong> and <strong>DISCORD_CLIENT_ID</strong> in the Settings page.</li>
+            <li>Go to the <strong>Dashboard</strong> tab and click <strong>Run Bot</strong>.</li>
+            <li>Check the console output to verify the bot connects successfully.</li>
+            <li>Use <code>/play</code> in your Discord server to start playing music!</li>
+          </ol>
+        </div>
+
+        <div class="guide-section">
+          <h3>Available Commands</h3>
+          <table id="commands-table">
+            <tr><th>Command</th><th>Description</th></tr>
+            <tr><td><code>/play</code></td><td>Play a song from YouTube or Spotify</td></tr>
+            <tr><td><code>/skip</code></td><td>Skip the current track</td></tr>
+            <tr><td><code>/stop</code></td><td>Stop playback and clear the queue</td></tr>
+            <tr><td><code>/pause</code></td><td>Pause or resume playback</td></tr>
+            <tr><td><code>/queue</code></td><td>View the current song queue</td></tr>
+            <tr><td><code>/volume</code></td><td>Adjust the playback volume</td></tr>
+            <tr><td><code>/leave</code></td><td>Disconnect the bot from voice</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- General Settings Tab -->
+      <section id="tab-general" class="tab-content">
+        <h2>General Settings</h2>
+
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="input-close-to-tray" checked>
+            Minimize to system tray on close
+            <span class="help-icon" data-help="When enabled, clicking the X button will hide the window to the system tray instead of closing the application. The bot will continue running. Disable this to make the X button close the application completely.">?</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="input-auto-start">
+            Start Synk when Windows starts
+            <span class="help-icon" data-help="When enabled, Synk will automatically start when you log into Windows. The app will start minimized to the system tray. Disable this if you prefer to launch Synk manually.">?</span>
+          </label>
+        </div>
+
+        <div id="restart-notice" class="notice">Some settings may take effect after restarting the application.</div>
+      </section>
+
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

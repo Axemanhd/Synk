@@ -1,0 +1,374 @@
+const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, nativeImage, Notification } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
+
+const isDev = !app.isPackaged;
+
+function getBotDir() {
+  if (isDev) {
+    return path.join(__dirname, '..');
+  }
+  return path.join(process.resourcesPath, 'bot');
+}
+
+function getEnvPath() {
+  return path.join(getBotDir(), '.env');
+}
+
+function getSettingsPath() {
+  return path.join(app.getPath('userData'), 'desktop-settings.json');
+}
+
+function getTrayIcon() {
+  const icoPath = path.join(__dirname, 'build', 'icon.ico');
+  if (fs.existsSync(icoPath)) {
+    return nativeImage.createFromPath(icoPath).resize({ width: 16, height: 16 });
+  }
+  return null;
+}
+
+let mainWindow = null;
+let tray = null;
+let botProcess = null;
+let botStatus = 'stopped';
+let pendingRestart = false;
+let closeToTray = true;
+let autoStart = false;
+let firstClose = true;
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(getSettingsPath())) {
+      const data = JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8'));
+      if (typeof data.closeToTray === 'boolean') closeToTray = data.closeToTray;
+      if (typeof data.autoStart === 'boolean') autoStart = data.autoStart;
+      if (typeof data.firstClose === 'boolean') firstClose = data.firstClose;
+    }
+  } catch {}
+}
+
+function saveSettings() {
+  try {
+    fs.writeFileSync(getSettingsPath(), JSON.stringify({ closeToTray, autoStart, firstClose }, null, 2));
+  } catch {}
+}
+
+function loadEnv() {
+  const envPath = getEnvPath();
+  const env = {};
+  try {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx === -1) continue;
+        const key = trimmed.slice(0, eqIdx).trim();
+        const value = trimmed.slice(eqIdx + 1).trim();
+        if (key) env[key] = value;
+      }
+    }
+  } catch {}
+  return env;
+}
+
+function saveEnv(settings) {
+  const envPath = getEnvPath();
+  let content = '# Synk — Discord Music Bot\n';
+  content += `DISCORD_TOKEN=${settings.DISCORD_TOKEN || ''}\n`;
+  content += `DISCORD_CLIENT_ID=${settings.DISCORD_CLIENT_ID || ''}\n`;
+  content += `LOG_LEVEL=${settings.LOG_LEVEL || 'info'}\n`;
+  try {
+    fs.writeFileSync(envPath, content, 'utf8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function setStatus(status) {
+  botStatus = status;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('status-change', status);
+  }
+  if (tray) {
+    const contextMenu = buildTrayMenu();
+    tray.setContextMenu(contextMenu);
+  }
+}
+
+function buildTrayMenu() {
+  const template = [
+    {
+      label: 'Show Synk',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: botStatus === 'running' ? 'Stop Bot' : 'Run Bot',
+      click: () => {
+        if (botStatus === 'running') {
+          stopBot();
+        } else {
+          runBot();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        stopBot();
+        app.isQuitting = true;
+        app.quit();
+      }
+    }
+  ];
+  return Menu.buildFromTemplate(template);
+}
+
+function createTray() {
+  const icon = getTrayIcon() || nativeImage.createEmpty();
+  tray = new Tray(icon);
+  tray.setToolTip('Synk — Discord Music Bot');
+  tray.setContextMenu(buildTrayMenu());
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 700,
+    minWidth: 600,
+    minHeight: 500,
+    resizable: true,
+    icon: path.join(__dirname, 'build', 'icon.ico'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    },
+    show: false
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
+  mainWindow.on('close', (event) => {
+    if (!app.isQuitting && closeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+      if (firstClose) {
+        firstClose = false;
+        saveSettings();
+        if (Notification.isSupported()) {
+          const notif = new Notification({
+            title: 'Synk is still running',
+            body: 'The application is minimized to the system tray. You can change this behavior in Settings > General.'
+          });
+          notif.show();
+        }
+      }
+      return;
+    }
+    app.isQuitting = true;
+    stopBot();
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+function runBot() {
+  if (botProcess) {
+    return;
+  }
+
+  const env = loadEnv();
+  if (!env.DISCORD_TOKEN) {
+    dialog.showErrorBox('Configuration Required', 'Please set your Discord Bot Token in Settings before running the bot.');
+    return;
+  }
+  if (!env.DISCORD_CLIENT_ID) {
+    dialog.showErrorBox('Configuration Required', 'Please set your Discord Client ID in Settings before running the bot.');
+    return;
+  }
+
+  setStatus('starting');
+
+  const botDir = getBotDir();
+  const botScript = path.join(botDir, 'dist', 'index.js');
+
+  if (!fs.existsSync(botScript)) {
+    dialog.showErrorBox('Bot Not Found', `Could not find bot entry point at:\n${botScript}\n\nMake sure you have built the bot first (npm run build).`);
+    setStatus('stopped');
+    return;
+  }
+
+  const childEnv = {
+    ...process.env,
+    DISCORD_TOKEN: env.DISCORD_TOKEN,
+    DISCORD_CLIENT_ID: env.DISCORD_CLIENT_ID,
+    LOG_LEVEL: env.LOG_LEVEL || 'info'
+  };
+
+  botProcess = spawn('node', [botScript], {
+    cwd: botDir,
+    env: childEnv,
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  botProcess.stdout.on('data', (data) => {
+    const lines = data.toString();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('log-output', lines);
+    }
+  });
+
+  botProcess.stderr.on('data', (data) => {
+    const lines = data.toString();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('log-output', '[stderr] ' + lines);
+    }
+  });
+
+  botProcess.on('error', (err) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('log-output', `[error] ${err.message}\n`);
+    }
+    botProcess = null;
+    setStatus('stopped');
+    if (pendingRestart) {
+      pendingRestart = false;
+      setTimeout(() => runBot(), 1000);
+    }
+  });
+
+  botProcess.on('exit', (code, signal) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('log-output', `[bot] Process exited (code: ${code}, signal: ${signal})\n`);
+    }
+    botProcess = null;
+    setStatus('stopped');
+    if (pendingRestart) {
+      pendingRestart = false;
+      setTimeout(() => runBot(), 1000);
+    }
+  });
+
+  setStatus('running');
+}
+
+function stopBot() {
+  if (!botProcess) return;
+
+  pendingRestart = false;
+  setStatus('stopping');
+
+  try {
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/pid', botProcess.pid.toString(), '/f', '/t']);
+    } else {
+      botProcess.kill('SIGTERM');
+    }
+  } catch {
+    botProcess.kill();
+  }
+
+  botProcess = null;
+  setStatus('stopped');
+}
+
+function restartBot() {
+  if (botProcess) {
+    pendingRestart = true;
+    stopBot();
+  } else {
+    runBot();
+  }
+}
+
+app.whenReady().then(() => {
+  loadSettings();
+  app.setLoginItemSettings({ openAtLogin: autoStart });
+  createTray();
+  createWindow();
+
+  ipcMain.handle('get-status', () => botStatus);
+
+  ipcMain.handle('run-bot', () => {
+    runBot();
+    return botStatus;
+  });
+
+  ipcMain.handle('stop-bot', () => {
+    stopBot();
+    return botStatus;
+  });
+
+  ipcMain.handle('restart-bot', () => {
+    restartBot();
+    return botStatus;
+  });
+
+  ipcMain.handle('load-settings', () => {
+    return {
+      env: loadEnv(),
+      preferences: { closeToTray, autoStart, firstClose }
+    };
+  });
+
+  ipcMain.handle('save-settings', (_event, settings) => {
+    return saveEnv(settings);
+  });
+
+  ipcMain.handle('set-preference', (_event, key, value) => {
+    if (key === 'closeToTray') {
+      closeToTray = value;
+      saveSettings();
+      return true;
+    }
+    if (key === 'autoStart') {
+      autoStart = value;
+      app.setLoginItemSettings({ openAtLogin: value });
+      saveSettings();
+      return true;
+    }
+    return false;
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  } else {
+    mainWindow.show();
+  }
+});
+
+app.on('before-quit', () => {
+  app.isQuitting = true;
+  stopBot();
+});

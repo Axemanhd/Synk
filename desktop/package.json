@@ -1,0 +1,70 @@
+{
+  "name": "synk-desktop",
+  "version": "1.0.0",
+  "description": "Synk Discord Music Bot — Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "node launcher.js",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.synk.bot",
+    "productName": "Synk",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "build/icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "bot/dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../node_modules",
+        "to": "bot/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../package.json",
+        "to": "bot/package.json"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Synk",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "license": null
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.0",
+    "electron-builder": "^25.0.0"
+  }
+}
