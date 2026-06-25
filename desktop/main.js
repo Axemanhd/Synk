@@ -34,6 +34,7 @@ let tray = null;
 let botProcess = null;
 let botStatus = 'stopped';
 let pendingRestart = false;
+let pendingUpdatePath = null;
 let closeToTray = true;
 let autoStart = false;
 let firstClose = true;
@@ -414,8 +415,6 @@ app.whenReady().then(() => {
     }
     return false;
   });
-
-let pendingUpdatePath = null;
 
   ipcMain.handle('check-for-updates', () => {
     return checkForUpdates();
