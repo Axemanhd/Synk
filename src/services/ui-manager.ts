@@ -29,6 +29,10 @@ export interface ButtonHandlers {
 export class UIManager {
   private panels: Map<string, PlayerPanel> = new Map();
   private handlers: ButtonHandlers | null = null;
+  private lastActionTime: Map<string, number> = new Map();
+
+  private static readonly ACTION_COOLDOWN_MS = 1500;
+  private static readonly MIN_PLAY_TIME_MS = 3000;
 
   setHandlers(handlers: ButtonHandlers): void {
     this.handlers = handlers;
@@ -110,6 +114,27 @@ export class UIManager {
         return;
       }
 
+      const now = Date.now();
+      const lastAction = this.lastActionTime.get(queue.guildId) ?? 0;
+      const elapsed = now - lastAction;
+
+      if (elapsed < UIManager.ACTION_COOLDOWN_MS) {
+        await interaction.deferUpdate().catch(() => {});
+        return;
+      }
+
+      if (interaction.customId === 'skip') {
+        const q = queueManager.get(queue.guildId);
+        if (q && q.trackStartedAt > 0) {
+          const trackElapsed = now - q.trackStartedAt;
+          if (trackElapsed < UIManager.MIN_PLAY_TIME_MS) {
+            await interaction.deferUpdate().catch(() => {});
+            return;
+          }
+        }
+      }
+
+      this.lastActionTime.set(queue.guildId, now);
       await interaction.deferUpdate();
 
       switch (interaction.customId) {
@@ -273,6 +298,7 @@ export class UIManager {
     }
 
     this.panels.delete(guildId);
+    this.lastActionTime.delete(guildId);
   }
 }
 

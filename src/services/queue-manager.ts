@@ -26,6 +26,7 @@ export class QueueManager {
       paused: false,
       position: 0,
       shuffled: false,
+      trackStartedAt: 0,
     };
 
     this.queues.set(guild.id, queue);

@@ -110,6 +110,7 @@ export class MusicService {
       player.on(AudioPlayerStatus.Playing, () => {
         queue.playing = true;
         queue.paused = false;
+        queue.trackStartedAt = Date.now();
         this.inactivityManager.cancelTimers(guildId);
         logger.info({ guildId, track: queue.currentTrack?.title }, 'Player status: playing');
         uiManager.updatePanel(guildId);
@@ -188,6 +189,7 @@ export class MusicService {
       player.play(resource);
       queue.playing = true;
       queue.paused = false;
+      queue.trackStartedAt = Date.now();
       logger.info({ guildId, track: track.title }, 'Now playing (direct)');
     } catch (error: any) {
       const msg = typeof error === 'string' ? error : error?.message || error?.toString?.() || 'unknown';
@@ -220,6 +222,7 @@ export class MusicService {
       if (queue) {
         queue.playing = true;
         queue.paused = false;
+        queue.trackStartedAt = Date.now();
       }
       logger.info({ guildId, track: track.title }, 'Now playing previous track');
       return true;

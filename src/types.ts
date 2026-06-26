@@ -24,6 +24,7 @@ export interface QueueData {
   paused: boolean;
   position: number;
   shuffled: boolean;
+  trackStartedAt: number;
 }
 
 export interface PlayerPanel {
