@@ -1,15 +1,16 @@
 # Synk — Codebase Audit
 
-**Date:** 2026-06-25  
+**Date:** 2026-06-26  
 **Version:** 1.0.8  
 **Files Audited:** 22 source files across bot (src/) and desktop app (desktop/)
-**Status:** 13 of 36 issues resolved; 23 open
+**Status:** 14 of 36 issues resolved; 22 open
 
 ## Resolution Log
 
-### v1.0.8 (2026-06-25)
+### v1.0.8 (2026-06-26)
 - 🆕 **M-11:** Button interaction rate limiting — per-guild 1.5s cooldown on all playback buttons
 - 🆕 **Skip guard:** Skip blocked until track has played for 3 seconds minimum to prevent overload
+- ✅ **N-2:** Version mismatch fixed — `package.json` and `desktop/package.json` both report 1.0.8
 
 ### v1.0.7 (2026-06-25)
 - 🆕 **Themes:** Light / Dark / Original selector in General tab, persists across restarts
@@ -75,7 +76,7 @@
 
 ---
 
-## LOW (13 issues)
+## LOW (12 issues)
 
 | # | File | Line | Issue |
 |---|------|------|-------|
@@ -89,7 +90,7 @@
 | L-10 | `desktop/main.js` | 478-497 | Download progress resets to 0% on HTTP 302 redirect |
 | L-11 | `.env` | - | Inconsistent line endings between saveEnv and dotenv |
 | L-12 | `commands/index.ts` | 91-95 | Failed YouTube URL resolves searches raw URL as text query |
-| N-2 | `package.json` | 3 | Version mismatch — manifest reports `1.0.0` while codebase includes v1.0.7 fixes |
+| N-2 | `package.json` | 3 | ✅ **RESOLVED v1.0.8** — both package.json files now report 1.0.8 |
 | N-3 | `voice-manager.ts` + `index.ts` | 30-38, 143-149 | Race condition on voice disconnect cleanup |
 | N-4 | `providers/spotify.ts` | 5 | Inconsistent module system — uses `require()` (CJS) while rest uses ES `import` |
 
@@ -99,6 +100,6 @@
 - **Critical:** 1 (exposed token)
 - **High:** 3 (order loss, process leaks, silence on disconnect)
 - **Medium:** 7 (permission gaps, dead code, no integrity checks, missing progress callback, button rate limiting)
-- **Low:** 13 (hardcoded paths, edge cases, version mismatch, race, style)
+- **Low:** 12 (hardcoded paths, edge cases, version mismatch, race, style)
 
-**Total: 23 open issues** (13 resolved of 36 total)
+**Total: 22 open issues** (14 resolved of 36 total)

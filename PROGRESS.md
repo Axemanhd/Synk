@@ -35,7 +35,7 @@
 
 ## Audit Log
 
-### 2026-06-25 — v1.0.8 Audit (13 resolved of 36; 23 open)
+### 2026-06-26 — v1.0.8 Audit (14 resolved of 36; 22 open)
 See `AUDIT.md` for full details.
 
 **Critical (1 remaining):**
@@ -78,6 +78,6 @@ See `AUDIT.md` for full details.
 - [ ] L-10: Download progress resets to 0% on HTTP 302 redirect
 - [ ] L-11: Inconsistent line endings between saveEnv and dotenv
 - [ ] L-12: Failed YouTube URL resolves searches raw URL as text query
-- [ ] N-2: `package.json` version mismatch (1.0.0 vs actual)
+- [x] N-2: `package.json` version mismatch (1.0.0 vs actual) → bumped both to 1.0.8
 - [ ] N-3: Race condition on voice disconnect cleanup
 - [ ] N-4: Inconsistent module system (require vs import)
