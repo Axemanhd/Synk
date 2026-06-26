@@ -1,6 +1,6 @@
 {
   "name": "synk-bot",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Synk — A self-hosted Discord music bot with YouTube and Spotify playlist support",
   "main": "dist/index.js",
   "scripts": {

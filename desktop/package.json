@@ -1,6 +1,6 @@
 {
   "name": "synk-desktop",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Synk Music Bot — Desktop Application",
   "main": "main.js",
   "scripts": {
